@@ -1,6 +1,26 @@
 import { Link } from "react-router-dom";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 export default function Header() {
+  const { profile, signOut } = useAuthContext();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <header className="bg-white border-b border-agro-border px-10 py-3">
       <div className="flex items-center justify-between">
@@ -46,14 +66,41 @@ export default function Header() {
           <div className="flex items-center gap-4">
             <div className="bg-agro-secondary rounded-full px-4 py-2">
               <span className="text-sm font-bold text-agro-text-secondary">
-                Hello, Liam 👋
+                Hello, {profile?.name || profile?.email?.split('@')[0] || 'User'} 👋
               </span>
             </div>
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/8be93844862b1827c794485437ec7cb07a813225?width=80"
-              alt="User avatar"
-              className="w-10 h-10 rounded-full"
-            />
+            <div className="relative group">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets/TEMP/8be93844862b1827c794485437ec7cb07a813225?width=80"
+                alt="User avatar"
+                className="w-10 h-10 rounded-full cursor-pointer"
+              />
+              {/* Dropdown menu */}
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-agro-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  <div className="px-4 py-2 border-b border-agro-border">
+                    <p className="text-sm font-medium text-agro-text-primary">
+                      {profile?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-agro-text-muted">
+                      {profile?.email}
+                    </p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 text-sm text-agro-text-primary hover:bg-agro-secondary transition-colors"
+                  >
+                    Profile Settings
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

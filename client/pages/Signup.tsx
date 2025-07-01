@@ -1,24 +1,44 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function Signup() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
+    district: "",
+    state: "",
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, signInWithGoogle } = useAuthContext();
+  const { signUp, signInWithGoogle } = useAuthContext();
 
-  const from = location.state?.from?.pathname || "/dashboard";
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    
+    if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
       return;
@@ -26,20 +46,28 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        {
+          name: formData.name,
+          district: formData.district,
+          state: formData.state,
+        }
+      );
       
       if (error) {
         toast({
-          title: "Login Failed",
+          title: "Signup Failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Success",
-          description: "Welcome back!",
+          description: "Account created successfully! Welcome to AgroSaarthi.",
         });
-        navigate(from, { replace: true });
+        navigate("/dashboard");
       }
     } catch (error) {
       toast({
@@ -52,14 +80,14 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setLoading(true);
     try {
       const { error } = await signInWithGoogle();
       
       if (error) {
         toast({
-          title: "Google Login Failed",
+          title: "Google Signup Failed",
           description: error.message,
           variant: "destructive",
         });
@@ -115,8 +143,8 @@ export default function Login() {
             AgroSaarthi
           </h1>
         </Link>
-        <Link to="/signup" className="agro-button-primary text-sm px-4 py-2">
-          Sign Up
+        <Link to="/login" className="agro-button-secondary text-sm px-4 py-2">
+          Log In
         </Link>
       </header>
 
@@ -125,20 +153,21 @@ export default function Login() {
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-agro-text-primary mb-3">
-              Welcome back
+              Create your account
             </h1>
             <p className="text-agro-text-muted">
-              Sign in to your AgroSaarthi account
+              Join AgroSaarthi and start protecting your crops
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <input
                 type="email"
+                name="email"
                 placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full agro-input"
                 required
                 disabled={loading}
@@ -147,13 +176,62 @@ export default function Login() {
 
             <div>
               <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full agro-input"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="district"
+                placeholder="District"
+                value={formData.district}
+                onChange={handleChange}
+                className="w-full agro-input"
+                disabled={loading}
+              />
+              <input
+                type="text"
+                name="state"
+                placeholder="State"
+                value={formData.state}
+                onChange={handleChange}
+                className="w-full agro-input"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <input
                 type="password"
+                name="password"
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full agro-input"
                 required
                 disabled={loading}
+                minLength={6}
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full agro-input"
+                required
+                disabled={loading}
+                minLength={6}
               />
             </div>
 
@@ -163,7 +241,7 @@ export default function Login() {
                 className="w-full agro-button-primary h-12 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Log In"}
+                {loading ? "Creating account..." : "Create Account"}
               </button>
             </div>
           </form>
@@ -173,7 +251,7 @@ export default function Login() {
               Or continue with
             </p>
             <button
-              onClick={handleGoogleLogin}
+              onClick={handleGoogleSignup}
               className="w-full agro-button-secondary h-12 text-base flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
@@ -197,9 +275,9 @@ export default function Login() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-agro-text-muted">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-agro-primary hover:underline">
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="text-agro-primary hover:underline">
+                Log in
               </Link>
             </p>
           </div>
